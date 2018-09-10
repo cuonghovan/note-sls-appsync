@@ -13,12 +13,12 @@ custom:
   appSync:
     name: ${self:provider.apiname}
     region: ${self:provider.region}
-    authenticationType: API_KEY #AMAZON_COGNITO_USER_POOLS
-    # userPoolConfig:
-    #   awsRegion: { Ref: AWS::Region }
-    #   defaultAction: ALLOW
-    #   userPoolId: { Ref: UserPool }
-    schema: schema.graphql # In case you want to change it
+    authenticationType: AMAZON_COGNITO_USER_POOLS
+    userPoolConfig:
+      awsRegion: { Ref: AWS::Region }
+      defaultAction: ALLOW
+      userPoolId: { Ref: UserPool }
+    schema: schema.graphql
     serviceRole: "AppSyncServiceRole"
     dataSources:
       - type: AMAZON_DYNAMODB
@@ -51,34 +51,38 @@ custom:
 
 resources:
   Resources:
-    # # Amazon Cognito user pool
-    # UserPool:
-    #   Type: "AWS::Cognito::UserPool"
-    #   Description: "An Amazon Cognito user pool for authenticating users"
-    #   Properties:
-    #     UserPoolName: ${self:provider.apiname}-user-pool
+    # Amazon Cognito user pool
+    UserPool:
+      Type: "AWS::Cognito::UserPool"
+      Description: "An Amazon Cognito user pool for authenticating users"
+      Properties:
+        UserPoolName: ${self:provider.apiname}-user-pool
 
-    # # An app client for the Amazon Cognito user pool
-    # UserPoolClient:
-    #   Type: "AWS::Cognito::UserPoolClient"
-    #   Description: "App Client used by AWS AppSync"
-    #   Properties:
-    #     ClientName: ${self:provider.apiname}-appsync-client
-    #     GenerateSecret: false
-    #     UserPoolId: { Ref: UserPool }
+    # An app client for the Amazon Cognito user pool
+    UserPoolClient:
+      Type: "AWS::Cognito::UserPoolClient"
+      Description: "App Client used by AWS AppSync"
+      Properties:
+        ClientName: ${self:provider.apiname}-appsync-client
+        GenerateSecret: false
+        UserPoolId: { Ref: UserPool }
 
     # DynamoDB Table
     NotesTable:
       Type: "AWS::DynamoDB::Table"
       Description: "Data Store for AWS AppSync Notes Type"
       Properties:
-        TableName: ${self:provider.apiname}-notes-table-1
+        TableName: ${self:provider.apiname}-notes-table
         AttributeDefinitions:
           - AttributeName: "NoteId"
+            AttributeType: "S"
+          - AttributeName: "UserId"
             AttributeType: "S"
         KeySchema:
           - AttributeName: "NoteId"
             KeyType: "HASH"
+          - AttributeName: "UserId"
+            KeyType: "RANGE"
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
@@ -113,4 +117,4 @@ resources:
                     - "dynamodb:Scan"
                     - "dynamodb:UpdateItem"
                   Resource:
-                    - "arn:aws:dynamodb:us-east-1:*:table/notes-dev-notes-table-1"
+                    - "arn:aws:dynamodb:us-east-1:*:table/notes-dev-notes-table"
